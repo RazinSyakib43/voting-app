@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR Code untuk Voting</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Scan QR Code untuk Voting</h1>
+
+        <!-- Div untuk kamera -->
+        <div style="width: 500px" id="qr-reader"></div>
+
+        <!-- Tombol untuk membuka kamera dan memulai scanning -->
+        <div id="qr-reader-results"></div>
+
+        <form id="vote-form" action="/vote" method="POST" style="display:none;">
+            <input type="hidden" name="uuid" id="uuid-input">
+            <p>Pilih vote Anda:</p>
+            <input type="radio" id="vote1" name="vote" value="1">
+            <label for="vote1">Pilihan 1</label><br>
+            <input type="radio" id="vote2" name="vote" value="2">
+            <label for="vote2">Pilihan 2</label><br><br>
+            <button type="submit">Submit Vote</button>
+        </form>
+
+        <p id="error-message" style="color:red;"></p>
+    </div>
+
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code scanned = ${decodedText}`, decodedResult);
+
+            // Ambil UUID dari hasil scan
+            const qrData = JSON.parse(decodedText);
+            const uuid = qrData.uuid;
+
+            // Set nilai UUID ke dalam input hidden
+            document.getElementById('uuid-input').value = uuid;
+
+            // Tampilkan form voting
+            document.getElementById('vote-form').style.display = 'block';
+
+            // Hentikan kamera setelah QR Code berhasil dipindai
+            html5QrCode.stop().then(() => {
+                console.log("Camera stopped");
+            }).catch((err) => {
+                console.error("Failed to stop camera", err);
+            });
+        }
+
+        function onScanFailure(error) {
+            // Ketika QR code tidak terdeteksi
+            console.warn(`QR code scan failed: ${error}`);
+        }
+
+        const html5QrCode = new Html5Qrcode("qr-reader");
+
+        // Mulai pemindaian QR code dengan menggunakan kamera
+        html5QrCode.start({
+                facingMode: "environment"
+            }, // Arah kamera (environment = kamera belakang)
+            {
+                fps: 10, // Frame per second
+                qrbox: {
+                    width: 250,
+                    height: 250
+                } // Area kotak untuk mendeteksi QR Code
+            },
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.error("Error starting QR code scanner", err);
+        });
+    </script>
+</body>
+
+</html>
